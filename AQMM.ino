@@ -1,4 +1,4 @@
-/*
+ /*
    MIDIUSB_test.ino
 
    Created: 4/6/2015 10:47:08 AM
@@ -12,6 +12,7 @@
 const uint8_t ACTIVE = HIGH;
 const uint8_t SILENT = LOW;
 
+#define USE_DEBUG  1 
 
 // First parameter is the event type (0x09 = note on, 0x08 = note off).
 // Second parameter is note-on/note-off, combined with the channel.
@@ -54,7 +55,31 @@ int pitch_octave(byte pitch) {
 
 void setup() {
   Serial.begin(115200);
+  delay(1000);
+
   pinMode(LED_BUILTIN, OUTPUT);
+  Serial.println("Setup 1");
+
+  for (uint8_t i = 0; i < 3; i++){
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(1000);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(1000);
+  }
+  
+  Serial.println("Setup 2");
+
+  Serial.println(sizeof(pinIO));
+  
+  for (uint8_t i = 0; i < sizeof(pinIO) - 1; i++){
+    uint8_t pin = pgm_read_byte(pinIO + i);
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
+    
+    Serial.print("init pin: ");
+    Serial.println(pin);
+  }
+
 }
 
 
@@ -66,15 +91,20 @@ void playNote(uint8_t note, bool state)
   uint8_t pin = pgm_read_byte(pinIO + idx);
 
   digitalWrite(pin, state);
+
+#if USE_DEBUG 
   Serial.print("pin: ");
   Serial.print(pin);
   Serial.print(",  state: ");
   Serial.println(state);
+#endif
 }
 
 
 void noteOn(byte channel, byte pitch, byte velocity) {
   digitalWrite(LED_BUILTIN, HIGH);
+
+#if USE_DEBUG 
   Serial.print("Note On: ");
   Serial.print(pitch_name(pitch));
   Serial.print(pitch_octave(pitch));
@@ -82,13 +112,16 @@ void noteOn(byte channel, byte pitch, byte velocity) {
   Serial.print(channel);
   Serial.print(", velocity=");
   Serial.println(velocity);
+#endif
 
-  playNote(pitch, SILENT);
+  playNote(pitch, ACTIVE);
 
 }
 
 void noteOff(byte channel, byte pitch, byte velocity) {
   digitalWrite(LED_BUILTIN, LOW);
+
+#if USE_DEBUG 
   Serial.print("Note Off: ");
   Serial.print(pitch_name(pitch));
   Serial.print(pitch_octave(pitch));
@@ -96,8 +129,9 @@ void noteOff(byte channel, byte pitch, byte velocity) {
   Serial.print(channel);
   Serial.print(", velocity=");
   Serial.println(velocity);
+#endif
 
-  playNote(pitch, (velocity == 0) ? SILENT : ACTIVE);
+  playNote(pitch, SILENT);
   
 }
 // First parameter is the event type (0x0B = control change).
